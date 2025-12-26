@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-with-sidecar
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: shared-logs
+      mountPath: /var/log/nginx
+  - name: log-shipper
+    image: busybox:1.28
+    command: ['sh', '-c']
+    args:
+    - while true; do
+        echo "$(date): Processing logs..." >> /shared-logs/sidecar.log;
+        sleep 30;
+      done
+    volumeMounts:
+    - name: shared-logs
+      mountPath: /shared-logs
+  volumes:
+  - name: shared-logs
+    emptyDir: {}

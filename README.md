@@ -12,10 +12,22 @@ The fundamental building blocks of Kubernetes. Start here to understand how cont
 - `nginx-with-config-secret.yaml` - Shows how to inject configuration and secrets into pods
 
 **Advanced Examples:**
-- `nginx-security-context.yaml` - Security hardening with user/group settings and capabilities
-- `nginx-resource-limits.yaml` - CPU and memory requests/limits for resource management
-- `nginx-with-toleration.yaml` - How pods can tolerate node taints for specialized scheduling
-- `nginx-with-service-account.yaml` - Using service accounts for pod identity and API access
+- `security/nginx-security-context.yaml` - Security hardening with user/group settings and capabilities
+- `resources/nginx-resource-limits.yaml` - CPU and memory requests/limits for resource management
+- `resources/resource-limit-range.yaml` - Set default and maximum resource limits for containers
+- `resources/memory-limit-range.yaml` - Memory-specific limits for better resource control
+- `resources/resource-quota.yaml` - Namespace-level resource consumption limits
+- `scheduling/nginx-with-toleration.yaml` - How pods can tolerate node taints for specialized scheduling
+- `scheduling/nginx-node-selector.yaml` - Simple node selection using labels
+- `scheduling/nginx-node-affinity.yaml` - Advanced node and pod scheduling rules with affinity/anti-affinity
+- `scheduling/taint-commands.md` - Commands for node taints and scheduling control
+- `scheduling/node-labeling-commands.md` - Commands for labeling nodes
+- `containers/nginx-with-config-secret.yaml` - Shows how to inject configuration and secrets into pods
+- `containers/nginx-with-init-container.yaml` - Init containers that run before main containers start
+- `containers/nginx-with-sidecar.yaml` - Sidecar containers that run alongside main containers
+- `service-accounts/nginx-service-account.yaml` - Identity for pods to access Kubernetes API
+- `service-accounts/nginx-service-account-token.yaml` - Authentication token for service accounts
+- `service-accounts/nginx-with-service-account.yaml` - Using service accounts for pod identity and API access
 
 ### **replicasets/** - ReplicaSet configurations
 Ensures multiple copies of your pods are always running. Think of it as a pod babysitter.

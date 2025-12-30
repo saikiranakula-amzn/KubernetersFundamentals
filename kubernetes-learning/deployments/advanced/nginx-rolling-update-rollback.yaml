@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-rollback-demo
+  labels:
+    app: nginx-rollback
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  selector:
+    matchLabels:
+      app: nginx-rollback
+  template:
+    metadata:
+      labels:
+        app: nginx-rollback
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-rollback-service
+spec:
+  selector:
+    app: nginx-rollback
+  ports:
+  - port: 80
+    targetPort: 80
+  type: NodePort

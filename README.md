@@ -38,6 +38,12 @@ The preferred way to run applications. Deployments manage ReplicaSets and provid
 
 **Basic Examples:**
 - `nginx-deployment.yaml` - Standard deployment with 3 replicas and update capabilities
+- `rolling-update-deployment.yaml` - Rolling update deployment with strategy configuration and service
+
+**Advanced Examples:**
+- `nginx-rolling-update-rollback.yaml` - Rolling update deployment with rollback capabilities
+- `rolling-update-commands.md` - Commands for rolling updates and monitoring
+- `rolling-update-rollback-commands.md` - Complete guide for rolling updates and rollbacks
 
 ### **services/** - Service definitions (basic/advanced)
 How pods communicate with each other and the outside world.

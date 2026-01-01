@@ -79,14 +79,24 @@ Organize and isolate resources within your cluster.
 - `nginx-service-account-token.yaml` - Authentication token for service accounts
 - `taint-commands.md` - Commands for node taints and scheduling control
 
-### **ingress/** - Ingress controllers and rules
-Advanced traffic routing and SSL termination (examples coming soon).
+### **ingress/** - Ingress controllers and network policies
+Advanced traffic routing, SSL termination, and network security.
+- `nginx-ingress-controller.yaml` - Basic NGINX ingress controller setup with NodePort service
+- `nginx-ingress.yaml` - Basic ingress controller with host-based routing
+- `ingress-network-policy.yaml` - Ingress network policy allowing specific pod and namespace access
+- `egress-network-policy.yaml` - Egress network policy restricting outbound traffic
 
 ### **jobs/** - Job and CronJob definitions
-Run tasks to completion or on schedules (examples coming soon).
+Run tasks to completion or on schedules.
+- `math-job.yaml` - Basic job that runs a calculation with completions and parallelism
+- `math-cronjob.yaml` - CronJob that runs every 2 minutes with job history limits
 
 ### **volumes/** - Storage configurations (PV, PVC, StorageClass)
-Persistent storage for your applications (examples coming soon).
+Persistent storage for your applications.
+- `persistent-volumes/nginx-pv.yaml` - Basic persistent volume with hostPath storage
+- `persistent-volume-claims/nginx-pvc.yaml` - Persistent volume claim requesting 1Gi storage
+- `storage-classes/fast-ssd-storageclass.yaml` - StorageClass for dynamic provisioning with AWS EBS
+- `nginx-pod-with-pvc.yaml` - Pod using persistent volume claim for nginx html directory
 
 ## Imperative vs Declarative Commands
 

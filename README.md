@@ -33,6 +33,10 @@ The fundamental building blocks of Kubernetes. Start here to understand how cont
 Ensures multiple copies of your pods are always running. Think of it as a pod babysitter.
 - `nginx-replicaset.yaml` - Maintains 3 nginx pods automatically
 
+### **daemonsets/** - DaemonSet configurations
+Ensures a copy of a pod runs on every node in the cluster.
+- `fluentd-daemonset.yaml` - Log collection agent running on all nodes
+
 ### **deployments/** - Deployment manifests (basic/advanced)
 The preferred way to run applications. Deployments manage ReplicaSets and provide rolling updates.
 
@@ -51,6 +55,7 @@ How pods communicate with each other and the outside world.
 **Basic Examples:**
 - `nginx-clusterip-service.yaml` - Internal cluster communication only
 - `nginx-nodeport-service.yaml` - External access via node ports
+- `nginx-headless-service.yaml` - Headless service for StatefulSet with direct pod access
 
 **Advanced Examples:**
 - `nginx-loadbalancer-service.yaml` - AWS Load Balancer for production traffic
@@ -79,6 +84,25 @@ Organize and isolate resources within your cluster.
 - `nginx-service-account-token.yaml` - Authentication token for service accounts
 - `taint-commands.md` - Commands for node taints and scheduling control
 
+### **authorization/rbac/** - Role-Based Access Control
+Control access to Kubernetes resources with fine-grained permissions.
+- `basic-rbac.yaml` - ServiceAccount, Role, and RoleBinding for pod read access
+- `cluster-rbac.yaml` - ClusterRole and ClusterRoleBinding for cluster-wide permissions
+
+### **authorization/admission-controllers/** - Admission Controller configurations
+Control and modify resource creation with admission controllers.
+- `namespace-autoprovision.yaml` - NamespaceAutoProvision admission controller configuration
+- `webhook-server.py` - Python webhook server with mutate and validate endpoints
+- `webhook-deployment.yaml` - Deployment configuration for webhook server
+- `webhook-config.yaml` - MutatingAdmissionWebhook and ValidatingAdmissionWebhook configurations
+- `requirements.txt` - Python dependencies for webhook server
+
+Since the kube-apiserver is running as pod you can check the process to see enabled and disabled plugins.
+
+```bash
+ps -ef | grep kube-apiserver | grep admission-plugins
+```
+
 ### **ingress/** - Ingress controllers and network policies
 Advanced traffic routing, SSL termination, and network security.
 - `nginx-ingress-controller.yaml` - Basic NGINX ingress controller setup with NodePort service
@@ -97,6 +121,62 @@ Persistent storage for your applications.
 - `persistent-volume-claims/nginx-pvc.yaml` - Persistent volume claim requesting 1Gi storage
 - `storage-classes/fast-ssd-storageclass.yaml` - StorageClass for dynamic provisioning with AWS EBS
 - `nginx-pod-with-pvc.yaml` - Pod using persistent volume claim for nginx html directory
+
+### **crds/** - Custom Resource Definitions
+Extend Kubernetes API with custom resources.
+- `webapp-crd.yaml` - Custom resource definition for WebApp with validation schema
+- `webapp-controller.go` - Basic Go controller for WebApp CRD
+- `go.mod` - Go module dependencies for the controller
+
+**Deploy and Use CRDs:**
+```bash
+# 1. Apply the CRD to extend Kubernetes API
+kubectl apply -f webapp-crd.yaml
+
+# 2. Verify CRD is installed
+kubectl get crd webapps.example.com
+
+# 3. Create a WebApp custom resource
+kubectl apply -f webapp-crd.yaml
+
+# 4. List WebApp resources
+kubectl get webapps
+kubectl get wa  # using short name
+
+# 5. Describe WebApp resource
+kubectl describe webapp my-webapp
+
+# 6. Build and deploy controller (optional)
+go mod tidy
+go build -o webapp-controller webapp-controller.go
+# Create container image and deploy to cluster
+
+# 7. Delete WebApp resource
+kubectl delete webapp my-webapp
+
+# 8. Remove CRD (deletes all WebApp resources)
+kubectl delete crd webapps.example.com
+```
+
+**Operator Framework (Alternative Approach):**
+```bash
+# Install Operator SDK
+curl -LO https://github.com/operator-framework/operator-sdk/releases/download/v1.32.0/operator-sdk_linux_amd64
+chmod +x operator-sdk_linux_amd64 && sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk
+
+# Create new operator project
+operator-sdk init --domain=example.com --repo=github.com/example/webapp-operator
+
+# Create API and controller
+operator-sdk create api --group=apps --version=v1 --kind=WebApp --resource --controller
+
+# Build and deploy operator
+make docker-build docker-push IMG=webapp-operator:latest
+make deploy IMG=webapp-operator:latest
+
+# Create custom resource
+kubectl apply -f config/samples/apps_v1_webapp.yaml
+```
 
 ## Imperative vs Declarative Commands
 

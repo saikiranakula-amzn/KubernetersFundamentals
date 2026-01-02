@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-server
+  namespace: webhook-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhook-server
+  template:
+    metadata:
+      labels:
+        app: webhook-server
+    spec:
+      containers:
+      - name: webhook-server
+        image: python:3.9-slim
+        ports:
+        - containerPort: 8443
+        command:
+        - /bin/sh
+        - -c
+        - |
+          pip install flask pyopenssl
+          python /app/webhook-server.py
+        volumeMounts:
+        - name: webhook-code
+          mountPath: /app
+        - name: certs
+          mountPath: /etc/certs
+          readOnly: true
+      volumes:
+      - name: webhook-code
+        configMap:
+          name: webhook-code
+      - name: certs
+        secret:
+          secretName: webhook-certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  namespace: webhook-system
+spec:
+  selector:
+    app: webhook-server
+  ports:
+  - port: 443
+    targetPort: 8443
+    protocol: TCP
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: webhook-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webhook-code
+  namespace: webhook-system
+data:
+  webhook-server.py: |
+    #!/usr/bin/env python3
+    import json
+    import base64
+    from flask import Flask, request, jsonify
+
+    app = Flask(__name__)
+
+    @app.route('/mutate', methods=['POST'])
+    def mutate():
+        admission_review = request.get_json()
+        obj = admission_review["request"]["object"]
+        patches = []
+        
+        if "labels" not in obj.get("metadata", {}):
+            patches.append({
+                "op": "add",
+                "path": "/metadata/labels",
+                "value": {"mutated": "true"}
+            })
+        else:
+            patches.append({
+                "op": "add",
+                "path": "/metadata/labels/mutated",
+                "value": "true"
+            })
+        
+        patch_bytes = json.dumps(patches).encode()
+        patch_b64 = base64.b64encode(patch_bytes).decode()
+        
+        return jsonify({
+            "apiVersion": "admission.k8s.io/v1",
+            "kind": "AdmissionReview",
+            "response": {
+                "uid": admission_review["request"]["uid"],
+                "allowed": True,
+                "patchType": "JSONPatch",
+                "patch": patch_b64
+            }
+        })
+
+    @app.route('/validate', methods=['POST'])
+    def validate():
+        admission_review = request.get_json()
+        obj = admission_review["request"]["object"]
+        allowed = True
+        message = ""
+        
+        if obj["kind"] == "Pod":
+            containers = obj.get("spec", {}).get("containers", [])
+            for container in containers:
+                if "resources" not in container or "limits" not in container["resources"]:
+                    allowed = False
+                    message = f"Container {container['name']} must have resource limits"
+                    break
+        
+        return jsonify({
+            "apiVersion": "admission.k8s.io/v1",
+            "kind": "AdmissionReview",
+            "response": {
+                "uid": admission_review["request"]["uid"],
+                "allowed": allowed,
+                "status": {"message": message} if message else {}
+            }
+        })
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=8443, ssl_context=('/etc/certs/tls.crt', '/etc/certs/tls.key'))

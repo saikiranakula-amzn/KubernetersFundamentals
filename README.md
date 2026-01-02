@@ -122,11 +122,103 @@ Persistent storage for your applications.
 - `storage-classes/fast-ssd-storageclass.yaml` - StorageClass for dynamic provisioning with AWS EBS
 - `nginx-pod-with-pvc.yaml` - Pod using persistent volume claim for nginx html directory
 
+### **monitoring/** - Health checks and monitoring
+Pod health monitoring with probes.
+- `nginx-readiness-probe.yaml` - Readiness probes with httpGet, tcpSocket, and exec examples
+- `nginx-liveness-probe.yaml` - Liveness probes with httpGet, tcpSocket, and exec examples
+- `prometheus-monitoring.yaml` - Basic Prometheus setup for metrics collection
+- `sample-app-metrics.yaml` - Sample application with Prometheus metrics annotations
+
+**Prometheus Setup:**
+```bash
+# 1. Deploy Prometheus
+kubectl apply -f prometheus-monitoring.yaml
+
+# 2. Deploy sample app with metrics
+kubectl apply -f sample-app-metrics.yaml
+
+# 3. Access Prometheus UI
+kubectl get svc -n monitoring
+# Visit http://node-ip:nodeport
+
+# 4. Check targets in Prometheus
+# Go to Status > Targets to see discovered pods
+
+# 5. Query metrics
+# Use PromQL: up, node_cpu_seconds_total, etc.
+```
+
+**Metrics Server Setup:**
+```bash
+# Install metrics server for resource metrics
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Verify metrics server is running
+kubectl get pods -n kube-system | grep metrics-server
+
+# Check node metrics
+kubectl top nodes
+
+# Check pod metrics
+kubectl top pods
+```
+
+**How it works:**
+- Prometheus automatically discovers pods with `prometheus.io/scrape: "true"` annotation
+- Scrapes metrics from `/metrics` endpoint on specified port
+- ConfigMap defines scraping rules and service discovery
+- Sample app exposes system metrics via node-exporter
+
 ### **crds/** - Custom Resource Definitions
 Extend Kubernetes API with custom resources.
 - `webapp-crd.yaml` - Custom resource definition for WebApp with validation schema
 - `webapp-controller.go` - Basic Go controller for WebApp CRD
 - `go.mod` - Go module dependencies for the controller
+
+### **helm-charts/** - Helm Charts
+Package and deploy applications with Helm.
+- `webapp/` - Basic Helm chart with deployment, service, PV, PVC, and secret
+
+### **kustomize/** - Kustomize configurations
+Customize Kubernetes YAML for different environments.
+- `base/` - Base nginx deployment configuration
+- `overlays/dev/` - Development environment (1 replica)
+- `overlays/staging/` - Staging environment (2 replicas)  
+- `overlays/prod/` - Production environment (5 replicas)
+
+**Deploy Helm Chart:**
+```bash
+# Package chart into tar format
+helm package ./helm-charts/webapp/
+
+# Install from packaged chart
+helm install my-webapp webapp-0.1.0.tgz
+
+# Install the chart from directory
+helm install my-webapp ./helm-charts/webapp/
+
+# Check deployment status
+helm status my-webapp
+kubectl get all -l app=webapp
+
+# Upgrade with custom values
+helm upgrade my-webapp ./helm-charts/webapp/ --set replicaCount=3
+
+# Rollback to previous version
+helm rollback my-webapp
+
+# Rollback to specific revision
+helm rollback my-webapp 1
+
+# View release history
+helm history my-webapp
+
+# Uninstall the chart
+helm uninstall my-webapp
+
+# Dry run to see generated manifests
+helm install my-webapp ./helm-charts/webapp/ --dry-run --debug
+```
 
 **Deploy and Use CRDs:**
 ```bash
@@ -277,4 +369,48 @@ kubectl get services
 Clean up:
 ```bash
 kubectl delete -f <path-to-yaml-file>
+```
+
+## Helm Installation
+
+**Install Helm:**
+```bash
+# macOS
+brew install helm
+
+# Linux
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Windows (using Chocolatey)
+choco install kubernetes-helm
+
+# Verify installation
+helm version
+```
+
+**Basic Helm Commands:**
+```bash
+# Add a repository
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+# Update repositories
+helm repo update
+
+# Search for charts
+helm search repo nginx
+
+# Install a chart
+helm install my-nginx bitnami/nginx
+
+# List releases
+helm list
+
+# Upgrade a release
+helm upgrade my-nginx bitnami/nginx
+
+# Uninstall a release
+helm uninstall my-nginx
+
+# Create your own chart
+helm create my-chart
 ```

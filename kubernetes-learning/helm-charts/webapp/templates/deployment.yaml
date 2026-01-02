@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "webapp.fullname" . }}
+  labels:
+    app: {{ include "webapp.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "webapp.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "webapp.name" . }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "webapp.fullname" . }}-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "webapp.fullname" . }}-secret
+              key: password
+        volumeMounts:
+        - name: webapp-storage
+          mountPath: /usr/share/nginx/html
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: webapp-storage
+        persistentVolumeClaim:
+          claimName: {{ include "webapp.fullname" . }}-pvc
